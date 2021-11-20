@@ -24,8 +24,8 @@ public class Area
         frame = f;
         posX = 0;
         posY = 0;
-        aWidth = 40;
-        aHeight = 40;
+        aWidth = 64;
+        aHeight = 64;
         aList = new Object[8][8];
     }
 
@@ -51,9 +51,20 @@ public class Area
         aColor = c;
     }
 
-    public void setFrame(Frame f)
-    {
-        frame = f;
+    public int getX() {
+        return posX;
+    }
+
+    public int getY() {
+        return posY;
+    }
+
+    public int getWidth() {
+        return aWidth;
+    }
+
+    public int getHeight() {
+        return aHeight;
     }
 
     public Object findObj(int x, int y)
@@ -86,19 +97,12 @@ public class Area
         }
     }
 
-    public int getX() {
-        return posX;
-    }
-
-    public int getY() {
-        return posY;
-    }
-
-    public int getWidth() {
-        return aWidth;
-    }
-
-    public int getHeight() {
-        return aHeight;
+    public void start()
+    {
+        for(int i = 0; i < 2; i++)
+        {
+            Food f = new Food(this);
+            aList[f.getPosY()][f.getPosX()] = f;
+        }
     }
 }

@@ -4,13 +4,14 @@ public class Food
 {
     private int posX, posY;
     private boolean alive;
-    Area a;
+    private Area a;
 
     public Food(int x, int y, Area area)
     {
         a = area;
         posX = x;
         posY = y;
+        FoodListManager.add(this);
     }
 
     public Food(Area area)
@@ -27,6 +28,7 @@ public class Food
         a = area;
         posX = x;
         posY = y;
+        FoodListManager.add(this);
     }
 
     public int getPosX()
@@ -38,6 +40,8 @@ public class Food
     {
         return posY;
     }
+
+    public Area getArea() { return a; }
 
     public boolean isAlive()
     {
