@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.util.ArrayList;
 
 public class Main
 {
@@ -9,6 +8,6 @@ public class Main
         frame.setSize(new Dimension(640, 421));
         frame.setTitle("Population");
         frame.setVisible(true);
-        frame.start();
+        frame.buffer = frame.createImage(640,421);
     }
 }
