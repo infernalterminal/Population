@@ -49,7 +49,7 @@ public class EFrame extends Frame implements Runnable
             while(!suspendingFlag)
             {
                 repaint();
-                System.out.println("update EFrame");
+                //System.out.println("update EFrame");
                 Thread.sleep(33);
                 synchronized(this)
                 {
@@ -85,7 +85,7 @@ public class EFrame extends Frame implements Runnable
         screengc = g;
         g = buffer.getGraphics();
 
-        /*d = getSize();
+        d = getSize();
         for(int i = 0; i < 3; i++)
         {
             for(int j = 0; j < 5; j++)
@@ -96,15 +96,25 @@ public class EFrame extends Frame implements Runnable
             }
         }
 
-         */
+
         Food [] foodList = FoodListManager.getCopyOfList();
         for(Food f: foodList)
         {
-            g.setColor(new Color(12, 125, 12));
+            g.setColor(new Color(154, 205, 50));
             int x = f.getPosX() * (f.getArea().getWidth()/8) + f.getArea().getX();
             int y = f.getPosY() * (f.getArea().getHeight()/8) + f.getArea().getY();
             g.fillOval(x, y + getInsets().top, 16,16);
         }
+
+        Animal[] animalsList = AnimalsListManager.getCopyOfList();
+        for(Animal a: animalsList)
+        {
+            g.setColor(new Color(255, 178, 0));
+            int x = a.getPosX() * (a.getArea().getWidth()/8) + a.getArea().getX();
+            int y = a.getPosY() * (a.getArea().getHeight()/8) + a.getArea().getY();
+            g.fillOval(x, y + getInsets().top, 16, 16);
+        }
+
 
         screengc.drawImage(buffer, 0, 0, null);
     }

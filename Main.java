@@ -7,6 +7,7 @@ public class Main
         EFrame frame = new EFrame();
         frame.setSize(new Dimension(640, 421));
         frame.setTitle("Population");
+        frame.setBackground(Color.BLACK);
         frame.setVisible(true);
         frame.buffer = frame.createImage(640,421);
     }

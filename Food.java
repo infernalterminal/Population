@@ -4,17 +4,17 @@ public class Food
 {
     private int posX, posY;
     private boolean alive;
-    private Area a;
+    private Area area;
 
-    public Food(int x, int y, Area area)
+    public Food(int x, int y, Area a)
     {
-        a = area;
+        area = a;
         posX = x;
         posY = y;
         FoodListManager.add(this);
     }
 
-    public Food(Area area)
+    public Food(Area a)
     {
         int x,y;
         Random random = new Random();
@@ -24,8 +24,8 @@ public class Food
             x = random.nextInt(8);
             y = random.nextInt(8);
         }
-        while(area.getObjFromList(x,y) != null);
-        a = area;
+        while(a.getObjFromList(x,y) != null);
+        area = a;
         posX = x;
         posY = y;
         FoodListManager.add(this);
@@ -41,10 +41,15 @@ public class Food
         return posY;
     }
 
-    public Area getArea() { return a; }
+    public Area getArea() { return area; }
 
     public boolean isAlive()
     {
         return alive;
+    }
+
+    @Override
+    public String toString() {
+        return "Food";
     }
 }

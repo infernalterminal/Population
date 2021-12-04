@@ -67,6 +67,8 @@ public class Area
         return aHeight;
     }
 
+    public String getName() { return aName; }
+
     public Object findObj(int x, int y)
     {
         int wStep = aWidth / 8;
@@ -76,6 +78,11 @@ public class Area
         if (aList[h][w] != null)
             return aList[h][w];
         return null;
+    }
+
+    public Object[][] getList()
+    {
+        return aList;
     }
 
     public Object getObjFromList(int x, int y)
@@ -104,5 +111,7 @@ public class Area
             Food f = new Food(this);
             aList[f.getPosY()][f.getPosX()] = f;
         }
+        Animal a = new Animal(this);
+        a.findNearestFood();
     }
 }
