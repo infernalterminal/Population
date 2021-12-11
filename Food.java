@@ -6,29 +6,12 @@ public class Food
     private boolean alive;
     private Area area;
 
-    public Food(int x, int y, Area a)
+    public Food(Area a, int x, int y)
     {
         area = a;
         posX = x;
         posY = y;
-        FoodListManager.add(this);
-    }
-
-    public Food(Area a)
-    {
-        int x,y;
-        Random random = new Random();
-
-        do
-        {
-            x = random.nextInt(8);
-            y = random.nextInt(8);
-        }
-        while(a.getObjFromList(x,y) != null);
-        area = a;
-        posX = x;
-        posY = y;
-        FoodListManager.add(this);
+        //FoodListManager.add(this);
     }
 
     public int getPosX()
