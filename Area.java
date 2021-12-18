@@ -151,6 +151,7 @@ public class Area
         Animal a = new Animal(this, x, y);
         animalList.add(a);
         aList[y][x] = a;
+        a.findFood();
     }
 
     public void createPopulation(int n)

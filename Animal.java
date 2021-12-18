@@ -53,6 +53,14 @@ public class Animal
         return posY;
     }
 
+    public void findFood()
+    {
+        Object objs[][] = area.getList();
+        Seeker<Food> fSeeker = new Seeker<>();
+        Object f = fSeeker.searchInList(objs);
+
+    }
+
     /*
     private Food[] getFood()
     {
