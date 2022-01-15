@@ -12,7 +12,6 @@ public class Animal
         area = a;
         posX = x;
         posY = y;
-        //AnimalsListManager.add(this);
     }
 
     public void findNearestFood()
@@ -56,28 +55,10 @@ public class Animal
     public void findFood()
     {
         Object objs[][] = area.getList();
-        Seeker<Food> fSeeker = new Seeker<>();
-        Object f = fSeeker.searchInList(objs);
+        Seeker fSeeker = new Seeker("Food", objs, 8, 8, posX, posY);
+        fSeeker.seek();
+
+        //Seeker aSeeker = new Seeker("Animal", objs, 8, 8, posX, posY);
 
     }
-
-    /*
-    private Food[] getFood()
-    {
-        ArrayList<Food> food = new ArrayList<Food>();
-        Object[][] list = area.getList();
-        //System.out.println(list);
-        for(int i = 0; i < 8; i++){
-            for(int j = 0; j < 8; j++)
-            {
-                if(list[i][j] != null)
-                {
-                    if(list[i][j].toString().equals("Food"))
-                        food.add((Food) list[i][j]);
-                }
-            }
-        }
-        return food.toArray(new Food[food.size()]);
-    }
-    */
 }
