@@ -1,11 +1,8 @@
-import java.util.ArrayList;
-import java.util.Random;
-
 public class Animal
 {
     private boolean isHungry = true;
     private int posX, posY;
-    Area area;
+    private Area area;
 
     public  Animal(Area a, int x, int y)
     {
@@ -54,10 +51,12 @@ public class Animal
 
     public void findFood()
     {
+
         Object objs[][] = area.getList();
         Seeker fSeeker = new Seeker("Food", objs, 8, 8, posX, posY);
-        fSeeker.seek();
-
+        int[] dist = fSeeker.seek();
+        System.out.println(posX + " - " + posY);
+        System.out.println(dist[0] + " - " + dist[1] + " - Food");
         //Seeker aSeeker = new Seeker("Animal", objs, 8, 8, posX, posY);
 
     }

@@ -4,11 +4,12 @@ import java.awt.event.WindowEvent;
 
 public class EFrame extends Frame implements Runnable
 {
-    int sp;
+    private int sp;
     boolean suspendingFlag;
     private Dimension d;
     private Thread thrd;
     private Area[][] areas = new Area[3][5];
+    private AreaManager aManager;
 
     Image buffer = null;
 
@@ -27,7 +28,9 @@ public class EFrame extends Frame implements Runnable
         thrd = new Thread(this, "EFrame");
         suspendingFlag = false;
         sp = (getHeight()/3) < (getWidth()/5) ? (getHeight()/3) : (getWidth()/5);
-        for(int i = 0; i < 3; i++)
+        aManager = new AreaManager(5,3, sp);
+        areas = aManager.getAreas();
+        /*for(int i = 0; i < 3; i++)
         {
             for(int j = 0; j < 5; j++)
             {
@@ -38,6 +41,8 @@ public class EFrame extends Frame implements Runnable
             }
         }
         areas[0][0].createPopulation(1);
+
+         */
         repaint();
         thrd.start();
     }

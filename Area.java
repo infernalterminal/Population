@@ -8,14 +8,15 @@ public class Area
     private int aWidth, aHeight;
     private String aName;
     private Color aColor;
-    Frame frame;
-    Object [][] aList;
-    ArrayList<Food> foodList;
-    ArrayList<Animal> animalList;
+    //private Frame frm;
+    private Object [][] aList;
+    private ArrayList<Food> foodList;
+    private ArrayList<Animal> animalList;
+    private AreaManager aManager;
 
-    public Area(Frame f, int x, int y, int width, int height)
+    public Area(int x, int y, int width, int height)
     {
-        frame = f;
+        //frm = f;
         posX = x;
         posY = y;
         aWidth = width;
@@ -25,9 +26,9 @@ public class Area
         animalList = new ArrayList<Animal>(10);
     }
 
-    public Area(Frame f)
+    public Area()
     {
-        frame = f;
+        //frm = f;
         posX = 0;
         posY = 0;
         aWidth = 64;
@@ -35,6 +36,11 @@ public class Area
         aList = new Object[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
+    }
+
+    public void setAreaManager(AreaManager areaManager)
+    {
+        aManager = areaManager;
     }
 
     public void setXAndY(int x, int y)
@@ -103,22 +109,13 @@ public class Area
 
     public void createFood()
     {
-        if(countFreeSpace() < 1)
+        if(countFreeSpace() > 0)
         {
-            return;
+            int[] space = findFreeSpace();
+            Food f = new Food(this, space[0], space[1]);
+            aList[space[1]][space[0]] = f;
+            foodList.add(f);
         }
-        int x,y;
-        Random random = new Random();
-
-        do
-        {
-            x = random.nextInt(8);
-            y = random.nextInt(8);
-        }
-        while(aList[y][x] != null);
-        Food f = new Food(this, x, y);
-        aList[y][x] = f;
-        foodList.add(f);
     }
 
     public void createFood(int n)
@@ -133,7 +130,7 @@ public class Area
         }
     }
 
-    public void createPopulation()
+    /*public void createPopulation()
     {
         if(countFreeSpace() < 1)
         {
@@ -154,6 +151,19 @@ public class Area
         a.findFood();
     }
 
+     */
+    public void createPopulation()
+    {
+        if(countFreeSpace() > 0)
+        {
+            int[] space = findFreeSpace();
+            Animal a = new Animal(this, space[0], space[1]);
+            aList[space[1]][space[0]] = a;
+            animalList.add(a);
+            a.findFood();
+        }
+    }
+
     public void createPopulation(int n)
     {
         int freeSpace = countFreeSpace();
@@ -164,5 +174,24 @@ public class Area
             createPopulation();
             count--;
         }
+    }
+
+    private int[] findFreeSpace()
+    {
+        if(countFreeSpace() < 1)
+        {
+            return null;
+        }
+        int x,y;
+        Random random = new Random();
+
+        do
+        {
+            x = random.nextInt(8);
+            y = random.nextInt(8);
+        }
+        while(aList[y][x] != null);
+
+        return new int[] {x,y};
     }
 }

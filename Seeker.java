@@ -1,24 +1,24 @@
-import java.util.ArrayList;
-
 public class Seeker
 {
     private String ob;
     private int wdt, hgh;
     private int steps;
-    int posX, posY;
+    private int posX, posY;
     private Object[][] objects;
+    private int nearestX, nearestY;
+    private boolean isFound = false;
 
-    private Object isObj(int x, int y)
+    private void isObj(int x, int y)
     {
         if(objects[y][x] != null)
         {
             if(objects[y][x].getClass().getName().equals(ob))
             {
-                System.out.println(x + " - " + y + " - " + objects[y][x].getClass().getSimpleName());
-                return objects[y][x];
+                //System.out.println(x + " - " + y + " - " + objects[y][x].getClass().getSimpleName());
+                compare(x,y);
+
             }
         }
-        return null;
     }
 
     Seeker(String  className, Object[][] o, int width, int height, int x, int y)
@@ -30,6 +30,7 @@ public class Seeker
         objects = o;
         posX = x;
         posY = y;
+        //System.out.println(posX + " - " + posY + " - animal");
     }
 
     private void search(int x, int y, boolean vertical, int range)
@@ -67,12 +68,35 @@ public class Seeker
         }
     }
 
-    public void seek()
+    private void compare(int x, int y)
+    {
+        if(isFound)
+        {
+            int distWdt = nearestX > posX ? (nearestX - posX) : (posX - nearestX);
+            int distHgh = nearestY > posY ? (nearestY - posY) : (posY - nearestY);
+            int newDistWdt = x > posX ? (x - posX) : (posX - x);
+            int newDistHgh = y > posY ? (y - posY) : (posY - y);
+
+            if((distHgh + distWdt) > (newDistWdt + newDistHgh))
+            {
+                nearestX = x;
+                nearestY = y;
+            }
+        }
+        else
+        {
+            nearestX = x;
+            nearestY = y;
+            isFound = true;
+        }
+    }
+
+    public int[] seek()
     {
         boolean vertical = false;
         boolean reverse = false;
-        int h = posY;
-        int w = posX;
+        int h;
+        int w;
         int k = 1;
         int range = 1;
         int counter = 1;
@@ -108,6 +132,11 @@ public class Seeker
             }
             range ++;
 
+            if(isFound)
+                return new int[] {nearestX, nearestY};
+
         } while (steps < wdt * hgh);
+
+        return null;
     }
 }
