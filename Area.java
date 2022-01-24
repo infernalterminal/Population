@@ -8,15 +8,15 @@ public class Area
     private int aWidth, aHeight;
     private String aName;
     private Color aColor;
-    //private Frame frm;
     private Object [][] aList;
     private ArrayList<Food> foodList;
     private ArrayList<Animal> animalList;
-    private AreaManager aManager;
+    private AreaManager aManager = null;
+    private Area[] aNeighbors = null;
+
 
     public Area(int x, int y, int width, int height)
     {
-        //frm = f;
         posX = x;
         posY = y;
         aWidth = width;
@@ -28,7 +28,6 @@ public class Area
 
     public Area()
     {
-        //frm = f;
         posX = 0;
         posY = 0;
         aWidth = 64;
@@ -193,5 +192,12 @@ public class Area
         while(aList[y][x] != null);
 
         return new int[] {x,y};
+    }
+
+    public void findNeighbors()
+    {
+        aNeighbors = aManager.getNeighbors(posX, posY);
+        for(Area a : aNeighbors)
+            System.out.println(a.getName());
     }
 }
