@@ -8,7 +8,7 @@ public class EFrame extends Frame implements Runnable
     boolean suspendingFlag;
     private Dimension d;
     private Thread thrd;
-    private Area[][] areas = new Area[3][5];
+    private Area[][] areas;
     private AreaManager aManager;
 
     Image buffer = null;
@@ -55,7 +55,7 @@ public class EFrame extends Frame implements Runnable
         }
         catch(InterruptedException e)
         {
-            System.out.println("Поток EFrame приостановлен");
+            System.out.println("Поток EFrame прерван");
         }
     }
 
@@ -74,7 +74,7 @@ public class EFrame extends Frame implements Runnable
     public void paint(Graphics g)
     {
 
-        Graphics screengc = null;
+        Graphics screengc;
 
         screengc = g;
         g = buffer.getGraphics();
@@ -105,8 +105,8 @@ public class EFrame extends Frame implements Runnable
                     for(Animal a: animalList)
                     {
                         g.setColor(Color.RED);
-                        int x = a.getPosX() * sp / 8 + a.getArea().getX() * sp;
-                        int y = a.getPosY() * sp / 8 + a.getArea().getY() * sp;
+                        int x = (int)((a.getPosX() + a.getFloatX()) * sp / 8) + a.getArea().getX() * sp;
+                        int y = (int)((a.getPosY() + a.getFloatY()) * sp / 8) + a.getArea().getY() * sp;
                         g.fillOval(x, y + getInsets().top, sp/8, sp/8);
                     }
                 }

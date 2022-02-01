@@ -11,7 +11,7 @@ public class Food
         area = a;
         posX = x;
         posY = y;
-        //FoodListManager.add(this);
+        alive = true;
     }
 
     public int getPosX()

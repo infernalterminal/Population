@@ -33,7 +33,8 @@ class AreaManager
     public Area[] getNeighbors(int x, int y)
     {
         if(x >= width | x < 0 | y >= height | y < 0)
-            return null;
+            throw new IndexOutOfBoundsException();
+            //return null;
 
         ArrayList<Area> areaArrayList = new ArrayList<Area>(8);
 

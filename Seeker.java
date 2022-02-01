@@ -13,11 +13,7 @@ public class Seeker
         if(objects[y][x] != null)
         {
             if(objects[y][x].getClass().getName().equals(ob))
-            {
-                //System.out.println(x + " - " + y + " - " + objects[y][x].getClass().getSimpleName());
                 compare(x,y);
-
-            }
         }
     }
 
@@ -25,7 +21,7 @@ public class Seeker
     {
         hgh = height;
         wdt = width;
-        steps = 1;
+        steps = 0;
         ob = className;
         objects = o;
         posX = x;
@@ -77,7 +73,7 @@ public class Seeker
             int newDistWdt = x > posX ? (x - posX) : (posX - x);
             int newDistHgh = y > posY ? (y - posY) : (posY - y);
 
-            if((distHgh + distWdt) > (newDistWdt + newDistHgh))
+            if(Math.sqrt(distHgh*distHgh + distWdt * distWdt) > Math.sqrt(newDistWdt*newDistWdt + newDistHgh*newDistHgh))
             {
                 nearestX = x;
                 nearestY = y;
@@ -95,12 +91,15 @@ public class Seeker
     {
         boolean vertical = false;
         boolean reverse = false;
+        boolean check = false;
         int h;
         int w;
         int k = 1;
         int range = 1;
         int counter = 1;
 
+        isObj(posX,posY);
+        steps++;
         do
         {
             for (int i = 0; i < 4; i++)
@@ -118,6 +117,8 @@ public class Seeker
                     //System.out.println(w + " - " + h + " m");
                     isObj(w, h);
                     search(w,h,!vertical, range);
+                    if(isFound)
+                        check = true;
                 }
 
                 counter++;
@@ -132,11 +133,10 @@ public class Seeker
             }
             range ++;
 
-            if(isFound)
+            if(isFound & check)
                 return new int[] {nearestX, nearestY};
 
         } while (steps < wdt * hgh);
-
-        return null;
+        return new int[] {-1};
     }
 }

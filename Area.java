@@ -93,6 +93,27 @@ public class Area
         return animalList.toArray(new Animal[animalList.size()]);
     }
 
+    public Object getObject(int x, int y)
+    {
+        if(x >= aWidth | x < 0 | y >= aHeight | y < 0)
+            throw new IndexOutOfBoundsException();
+        return aList[y][x];
+    }
+
+    public void moveObject(Object object, int x, int y, int newX, int newY) {
+        if (x >= aWidth | x < 0 | y >= aHeight | y < 0)
+            throw new IndexOutOfBoundsException();
+        if (newX >= aWidth | newX < 0 | newY >= aHeight | newY < 0)
+            throw new IndexOutOfBoundsException();
+
+        if (getObject(x, y) == object)
+        {
+            aList[y][x] = null;
+            //System.out.println(x + " - " + y + " - right object");
+        }
+        aList[newY][newX] = object;
+    }
+
     public int countFreeSpace()
     {
         int freeSpace = 0;
@@ -129,28 +150,6 @@ public class Area
         }
     }
 
-    /*public void createPopulation()
-    {
-        if(countFreeSpace() < 1)
-        {
-            return;
-        }
-        int x,y;
-        Random random = new Random();
-
-        do
-        {
-            x = random.nextInt(8);
-            y = random.nextInt(8);
-        }
-        while(aList[y][x] != null);
-        Animal a = new Animal(this, x, y);
-        animalList.add(a);
-        aList[y][x] = a;
-        a.findFood();
-    }
-
-     */
     public void createPopulation()
     {
         if(countFreeSpace() > 0)
@@ -159,7 +158,7 @@ public class Area
             Animal a = new Animal(this, space[0], space[1]);
             aList[space[1]][space[0]] = a;
             animalList.add(a);
-            a.findFood();
+            //a.findFood();
         }
     }
 
@@ -177,10 +176,12 @@ public class Area
 
     private int[] findFreeSpace()
     {
-        if(countFreeSpace() < 1)
+        /*if(countFreeSpace() < 1)
         {
             return null;
         }
+
+         */
         int x,y;
         Random random = new Random();
 
@@ -196,8 +197,15 @@ public class Area
 
     public void findNeighbors()
     {
-        aNeighbors = aManager.getNeighbors(posX, posY);
-        for(Area a : aNeighbors)
-            System.out.println(a.getName());
+        try
+        {
+            aNeighbors = aManager.getNeighbors(posX, posY);
+        }
+        catch (IndexOutOfBoundsException exc)
+        {
+            System.out.println(exc);
+        }
+        //for(Area a : aNeighbors)
+        //    System.out.println(a.getName());
     }
 }
