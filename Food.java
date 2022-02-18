@@ -1,27 +1,13 @@
-import java.util.Random;
-
-public class Food
+public class Food extends EObject
 {
-    private int posX, posY;
     private boolean alive;
     private Area area;
 
     public Food(Area a, int x, int y)
     {
+        super(x, y);
         area = a;
-        posX = x;
-        posY = y;
         alive = true;
-    }
-
-    public int getPosX()
-    {
-        return posX;
-    }
-
-    public int getPosY()
-    {
-        return posY;
     }
 
     public Area getArea() { return area; }

@@ -26,7 +26,6 @@ public class Seeker
         objects = o;
         posX = x;
         posY = y;
-        //System.out.println(posX + " - " + posY + " - animal");
     }
 
     private void search(int x, int y, boolean vertical, int range)
@@ -44,7 +43,6 @@ public class Seeker
                 break;
             steps ++;
             isObj(x1, y1);
-            //System.out.println(x1 + " - " + y1 + " - ");
         }
 
         x1 = x;
@@ -60,7 +58,6 @@ public class Seeker
                 break;
             steps++;
             isObj(x1, y1);
-            //System.out.println(x1 + " - " + y1 + " + ");
         }
     }
 
@@ -114,7 +111,6 @@ public class Seeker
                 if((w > -1 & h > -1) & (w < wdt & h < hgh))
                 {
                     steps++;
-                    //System.out.println(w + " - " + h + " m");
                     isObj(w, h);
                     search(w,h,!vertical, range);
                     if(isFound)

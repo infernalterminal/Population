@@ -28,7 +28,7 @@ public class EFrame extends Frame implements Runnable
         thrd = new Thread(this, "EFrame");
         suspendingFlag = false;
         sp = (getHeight()/3) < (getWidth()/5) ? (getHeight()/3) : (getWidth()/5);
-        aManager = new AreaManager(5,3, sp);
+        aManager = new AreaManager(5,3);
         areas = aManager.getAreas();
         repaint();
         thrd.start();
@@ -42,7 +42,6 @@ public class EFrame extends Frame implements Runnable
             while(!suspendingFlag)
             {
                 repaint();
-                //System.out.println("update EFrame");
                 Thread.sleep(33);
                 synchronized(this)
                 {

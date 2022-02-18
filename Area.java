@@ -8,23 +8,11 @@ public class Area
     private int aWidth, aHeight;
     private String aName;
     private Color aColor;
-    private Object [][] aList;
+    private EObject [][] aList;
     private ArrayList<Food> foodList;
     private ArrayList<Animal> animalList;
     private AreaManager aManager = null;
     private Area[] aNeighbors = null;
-
-
-    public Area(int x, int y, int width, int height)
-    {
-        posX = x;
-        posY = y;
-        aWidth = width;
-        aHeight = height;
-        aList = new Object[8][8];
-        foodList = new ArrayList<Food>(10);
-        animalList = new ArrayList<Animal>(10);
-    }
 
     public Area()
     {
@@ -32,14 +20,169 @@ public class Area
         posY = 0;
         aWidth = 64;
         aHeight = 64;
-        aList = new Object[8][8];
+        aList = new EObject[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
+    }
+
+    public Area(int x, int y, int width, int height)
+    {
+        posX = x;
+        posY = y;
+        aWidth = width;
+        aHeight = height;
+        aList = new EObject[8][8];
+        foodList = new ArrayList<Food>(10);
+        animalList = new ArrayList<Animal>(10);
+    }
+
+    synchronized int countFreeSpace()
+    {
+        int freeSpace = 0;
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++)
+            {
+                if(aList[i][j] == null)
+                    freeSpace++;
+            }
+        }
+        return freeSpace;
+    }
+
+    public void createFood()
+    {
+        if(countFreeSpace() > 0)
+        {
+            int[] space = findFreeSpace();
+            Food f = new Food(this, space[0], space[1]);
+            aList[space[1]][space[0]] = f;
+            foodList.add(f);
+        }
+    }
+
+    public void createFood(int n)
+    {
+        int freeSpace = countFreeSpace();
+
+        int count = Math.min(freeSpace, n);
+        while(count > 0)
+        {
+            createFood();
+            count--;
+        }
+    }
+
+    public void createPopulation()
+    {
+        if(countFreeSpace() > 0)
+        {
+            int[] space = findFreeSpace();
+            Animal a = new Animal(this, space[0], space[1]);
+            aList[space[1]][space[0]] = a;
+            animalList.add(a);
+        }
+    }
+
+    public void createPopulation(int n)
+    {
+        int freeSpace = countFreeSpace();
+
+        int count = Math.min(freeSpace, n);
+        while(count > 0)
+        {
+            createPopulation();
+            count--;
+        }
+    }
+
+    synchronized int[] findFreeSpace()
+    {
+        int x,y;
+        Random random = new Random();
+
+        do
+        {
+            x = random.nextInt(8);
+            y = random.nextInt(8);
+        }
+        while(aList[y][x] != null);
+
+        return new int[] {x,y};
+    }
+
+    private void findNeighbors()
+    {
+        try
+        {
+            aNeighbors = aManager.getNeighbors(posX, posY);
+        }
+        catch (IndexOutOfBoundsException exc)
+        {
+            System.out.println(exc);
+        }
+    }
+
+    synchronized public void moveObject(int id)
+    {
+        EObject object;
+        for(int i = 0; i < 8; i++)
+        {
+            for(int j = 0; j < 8; j++)
+            {
+                if(aList[i][j].getId() == id)
+                {
+                    object = aList[i][j];
+                    aList[i][j] = null;
+                    aList[object.getPosY()][object.getPosY()] = object;
+                    return;
+                }
+            }
+        }
+    }
+
+    synchronized public void removeObject(int id)
+    {
+        EObject object;
+        EObject[] list;
+
+        for(int i = 0; i < 8; i++)
+        {
+            for(int j = 0; j < 8; j++)
+            {
+                if(aList[i][j].getId() == id)
+                {
+                    aList[i][j] = null;
+                }
+            }
+        }
+
+        list = animalList.toArray(new EObject[animalList.size()]);
+        for(int i = 0; i < list.length; i++)
+        {
+            if(list[i].getId() == id)
+            {
+                object = list[i];
+                animalList.remove(object);
+                return;
+            }
+        }
+
+        list = foodList.toArray(new EObject[foodList.size()]);
+        for(int i = 0; i < list.length; i++)
+        {
+            if(list[i].getId() == id)
+            {
+                object = list[i];
+                foodList.remove(object);
+                return;
+            }
+        }
     }
 
     public void setAreaManager(AreaManager areaManager)
     {
         aManager = areaManager;
+        findNeighbors();
     }
 
     public void setXAndY(int x, int y)
@@ -93,119 +236,14 @@ public class Area
         return animalList.toArray(new Animal[animalList.size()]);
     }
 
-    public Object getObject(int x, int y)
+    public Area[] getaNeighbors() {
+        return aNeighbors;
+    }
+
+    public EObject getObject(int x, int y)
     {
         if(x >= aWidth | x < 0 | y >= aHeight | y < 0)
             throw new IndexOutOfBoundsException();
         return aList[y][x];
-    }
-
-    public void moveObject(Object object, int x, int y, int newX, int newY) {
-        if (x >= aWidth | x < 0 | y >= aHeight | y < 0)
-            throw new IndexOutOfBoundsException();
-        if (newX >= aWidth | newX < 0 | newY >= aHeight | newY < 0)
-            throw new IndexOutOfBoundsException();
-
-        if (getObject(x, y) == object)
-        {
-            aList[y][x] = null;
-            //System.out.println(x + " - " + y + " - right object");
-        }
-        aList[newY][newX] = object;
-    }
-
-    public int countFreeSpace()
-    {
-        int freeSpace = 0;
-        for(int i = 0; i < 8; i++){
-            for(int j = 0; j < 8; j++)
-            {
-                if(aList[i][j] == null)
-                    freeSpace++;
-            }
-        }
-        return freeSpace;
-    }
-
-    public void createFood()
-    {
-        if(countFreeSpace() > 0)
-        {
-            int[] space = findFreeSpace();
-            Food f = new Food(this, space[0], space[1]);
-            aList[space[1]][space[0]] = f;
-            foodList.add(f);
-        }
-    }
-
-    public void createFood(int n)
-    {
-        int freeSpace = countFreeSpace();
-
-        int count = n < freeSpace ? n : freeSpace;
-        while(count > 0)
-        {
-            createFood();
-            count--;
-        }
-    }
-
-    public void createPopulation()
-    {
-        if(countFreeSpace() > 0)
-        {
-            int[] space = findFreeSpace();
-            Animal a = new Animal(this, space[0], space[1]);
-            aList[space[1]][space[0]] = a;
-            animalList.add(a);
-            //a.findFood();
-        }
-    }
-
-    public void createPopulation(int n)
-    {
-        int freeSpace = countFreeSpace();
-
-        int count = n < freeSpace ? n : freeSpace;
-        while(count > 0)
-        {
-            createPopulation();
-            count--;
-        }
-    }
-
-    private int[] findFreeSpace()
-    {
-        /*if(countFreeSpace() < 1)
-        {
-            return null;
-        }
-
-         */
-        int x,y;
-        Random random = new Random();
-
-        do
-        {
-            x = random.nextInt(8);
-            y = random.nextInt(8);
-        }
-        while(aList[y][x] != null);
-
-        return new int[] {x,y};
-    }
-
-    public void findNeighbors()
-    {
-        try
-        {
-            aNeighbors = aManager.getNeighbors(posX, posY);
-        }
-        catch (IndexOutOfBoundsException exc)
-        {
-            System.out.println(exc);
-        }
-        //for(Area a : aNeighbors)
-        //    System.out.println(a.getName());
     }
 }
