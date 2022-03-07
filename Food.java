@@ -1,24 +1,19 @@
 public class Food extends EObject
 {
-    private boolean alive;
-    private Area area;
-
     public Food(Area a, int x, int y)
     {
-        super(x, y);
-        area = a;
-        alive = true;
-    }
-
-    public Area getArea() { return area; }
-
-    public boolean isAlive()
-    {
-        return alive;
+        super(a, x, y);
     }
 
     @Override
     public String toString() {
         return "Food";
+    }
+
+    synchronized void eat()
+    {
+        alive = false;
+        //System.out.println("food have been ate");
+        area.removeObject(getId());
     }
 }

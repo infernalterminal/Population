@@ -11,6 +11,7 @@ public class Area
     private EObject [][] aList;
     private ArrayList<Food> foodList;
     private ArrayList<Animal> animalList;
+    private ArrayList<Animal> fedAnimal;
     private AreaManager aManager = null;
     private Area[] aNeighbors = null;
 
@@ -23,6 +24,7 @@ public class Area
         aList = new EObject[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
+        fedAnimal = new ArrayList<>(2);
     }
 
     public Area(int x, int y, int width, int height)
@@ -34,6 +36,7 @@ public class Area
         aList = new EObject[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
+        fedAnimal = new ArrayList<>(2);
     }
 
     synchronized int countFreeSpace()
@@ -124,45 +127,32 @@ public class Area
 
     synchronized public void moveObject(int id)
     {
-        EObject object;
-        for(int i = 0; i < 8; i++)
+        EObject eObject;
+        int [] position = findEObjectById(id);
+        if(position[0] != -1)
         {
-            for(int j = 0; j < 8; j++)
-            {
-                if(aList[i][j].getId() == id)
-                {
-                    object = aList[i][j];
-                    aList[i][j] = null;
-                    aList[object.getPosY()][object.getPosY()] = object;
-                    return;
-                }
-            }
+            eObject = aList[position[0]][position[1]];
+            aList[position[0]][position[1]] = null;
+            aList[eObject.getPosY()][eObject.getPosX()] = eObject;
         }
     }
 
-    synchronized public void removeObject(int id)
+    public void removeObject(int id)
     {
         EObject object;
         EObject[] list;
 
-        for(int i = 0; i < 8; i++)
-        {
-            for(int j = 0; j < 8; j++)
-            {
-                if(aList[i][j].getId() == id)
-                {
-                    aList[i][j] = null;
-                }
-            }
-        }
+        int [] position = findEObjectById(id);
+        if(position[0] != -1)
+            aList[position[0]][position[1]] = null;
 
         list = animalList.toArray(new EObject[animalList.size()]);
         for(int i = 0; i < list.length; i++)
         {
             if(list[i].getId() == id)
             {
-                object = list[i];
-                animalList.remove(object);
+                //object = list[i];
+                animalList.remove(list[i]);
                 return;
             }
         }
@@ -172,11 +162,12 @@ public class Area
         {
             if(list[i].getId() == id)
             {
-                object = list[i];
-                foodList.remove(object);
+                //object = list[i];
+                foodList.remove(list[i]);
                 return;
             }
         }
+
     }
 
     public void setAreaManager(AreaManager areaManager)
@@ -226,18 +217,34 @@ public class Area
         return aList;
     }
 
-    public Food[] getFoodList()
+    synchronized Food[] getFoodList()
     {
         return foodList.toArray(new Food[foodList.size()]);
     }
 
-    public Animal[] getAnimalList()
+    synchronized Animal[] getAnimalList()
     {
         return animalList.toArray(new Animal[animalList.size()]);
     }
 
-    public Area[] getaNeighbors() {
+    synchronized Animal[] getFedAnimalList() { return fedAnimal.toArray(new Animal[fedAnimal.size()]); }
+
+    public Area[] getNeighbors() {
         return aNeighbors;
+    }
+
+    public Area[] getAllNeighbors()
+    {
+        int wdt = aManager.getWidth();
+        int hgh = aManager.getHeight();
+        Area[][] areas = aManager.getAreas();
+        Area[] allAreas = new Area[wdt * hgh];
+        for(int i = 0; i < hgh; i++)
+        {
+            for(int j = 0; j < wdt; j++)
+                allAreas[ (i * wdt) + j ] = areas[i][j];
+        }
+        return allAreas;
     }
 
     public EObject getObject(int x, int y)
@@ -245,5 +252,103 @@ public class Area
         if(x >= aWidth | x < 0 | y >= aHeight | y < 0)
             throw new IndexOutOfBoundsException();
         return aList[y][x];
+    }
+
+    public void emigrate(Animal animal)
+    {
+        if(animalList.contains(animal))
+        {
+            int areaX = posX;
+            int areaY = posY;
+            Area a;
+
+            if(animal.getPosX() > 7)
+            {
+                areaX = posX + 1;
+            }
+            else if(animal.getPosX() < 0)
+            {
+                areaX = posX - 1;
+            }
+            if (animal.getPosY() > 7)
+            {
+                areaY = posY + 1;
+            }
+            else if (animal.getPosY() < 0)
+            {
+                areaY = posY - 1;
+            }
+
+            a = aManager.getArea(areaX, areaY);
+            if(a.countFreeSpace() > 0)
+                a.migrate(animal);
+
+            removeObject(animal.getId());
+        }
+    }
+
+    public void migrate(Animal animal)
+    {
+        if(countFreeSpace() > 0)
+        {
+            int newX = animal.getPosX();
+            int newY = animal.getPosY();
+
+            if(newX > 7)
+            {
+                newX = 0;
+            }
+            else if(newX < 0)
+            {
+                newX = 7;
+            }
+            else if (newY > 7)
+            {
+                newY = 0;
+            }
+            else if (newY < 0)
+            {
+                newY = 7;
+            }
+
+            animal.setPosX(newX);
+            animal.setPosY(newY);
+            animal.setArea(this);
+
+            animalList.add(animal);
+            aList[newY][newX] = animal;
+        }
+    }
+
+    public int[] findEObjectById(int id)
+    {
+        for(int i = 0; i < 8; i++)
+        {
+            for(int j = 0; j < 8; j++)
+            {
+                if(aList[i][j] != null)
+                {
+                    if(aList[i][j].getId() == id)
+                    {
+                        return new int[]{i,j};
+                    }
+                }
+            }
+        }
+
+        return new int[]{-1};
+    }
+
+    public void fed(int id)
+    {
+        int [] position = findEObjectById(id);
+        EObject eObject;
+
+        if(position[0] != -1)
+        {
+            eObject = aList[position[0]][position[1]];
+            if(eObject instanceof Animal)
+                fedAnimal.add((Animal) eObject);
+        }
     }
 }

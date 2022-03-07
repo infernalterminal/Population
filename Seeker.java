@@ -7,6 +7,7 @@ public class Seeker
     private Object[][] objects;
     private int nearestX, nearestY;
     private boolean isFound = false;
+    private int mSteps;
 
     private void isObj(int x, int y)
     {
@@ -15,6 +16,18 @@ public class Seeker
             if(objects[y][x].getClass().getName().equals(ob))
                 compare(x,y);
         }
+    }
+
+    Seeker(String  className, Object[][] o, int width, int height, int x, int y, int maxSteps)
+    {
+        hgh = height;
+        wdt = width;
+        steps = 0;
+        ob = className;
+        objects = o;
+        posX = x;
+        posY = y;
+        mSteps = maxSteps;
     }
 
     Seeker(String  className, Object[][] o, int width, int height, int x, int y)
@@ -26,6 +39,7 @@ public class Seeker
         objects = o;
         posX = x;
         posY = y;
+        mSteps = hgh * wdt;
     }
 
     private void search(int x, int y, boolean vertical, int range)
@@ -132,7 +146,7 @@ public class Seeker
             if(isFound & check)
                 return new int[] {nearestX, nearestY};
 
-        } while (steps < wdt * hgh);
+        } while (steps < wdt * hgh & steps < mSteps);
         return new int[] {-1};
     }
 }

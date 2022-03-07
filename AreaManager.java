@@ -28,11 +28,20 @@ class AreaManager
                 areas[i][j].setAreaManager(this);
             }
         }
-        areas[1][2].createPopulation(5);
+        areas[1][2].createPopulation(1);
+
     }
 
     public Area[][] getAreas() {
         return areas;
+    }
+
+    public Area getArea(int x, int y)
+    {
+        if (x >= width | x < 0 | y >= height | y < 0)
+            throw new IndexOutOfBoundsException();
+
+        return areas[y][x];
     }
 
     public Area[] getNeighbors(int x, int y)
@@ -56,5 +65,13 @@ class AreaManager
         }
 
         return areaArrayList.toArray(new Area[areaArrayList.size()]);
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int getWidth() {
+        return width;
     }
 }
