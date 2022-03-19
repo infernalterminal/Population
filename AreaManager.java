@@ -28,7 +28,14 @@ class AreaManager
                 areas[i][j].setAreaManager(this);
             }
         }
-        areas[1][2].createPopulation(1);
+        //areas[1][2].createPopulation(2);
+        for(int i = 0; i < 1; i++)
+        {
+            for(int j = 0; j < horQuantity; j++)
+            {
+                areas[i][j].createPopulation(1);
+            }
+        }
 
     }
 
@@ -48,7 +55,6 @@ class AreaManager
     {
         if(x >= width | x < 0 | y >= height | y < 0)
             throw new IndexOutOfBoundsException();
-            //return null;
 
         ArrayList<Area> areaArrayList = new ArrayList<Area>(8);
 

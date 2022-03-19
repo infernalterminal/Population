@@ -73,7 +73,9 @@ public class EFrame extends Frame implements Runnable
     @Override
     public void paint(Graphics g)
     {
-
+        int animalCount = 0;
+        int bornAnimals = 0;
+        int deadAnimals = 0;
         Graphics screengc;
 
         screengc = g;
@@ -87,7 +89,9 @@ public class EFrame extends Frame implements Runnable
             for(int j = 0; j < 5; j++)
             {
                 Area area = areas[i][j];
-
+                animalCount += area.getAnimalList().length;
+                bornAnimals += area.getBornAnimals();
+                deadAnimals += area.getDeadAnimals();
                 //g.setColor(Color.BLUE);
                 //g.drawRect(area.getX() * sp + leftSpace,area.getY() * sp + getInsets().top + topSpace, sp, sp);
                 Food[] foodList = area.getFoodList();
@@ -116,8 +120,13 @@ public class EFrame extends Frame implements Runnable
             }
         }
 
+        g.setColor(Color.white);
 
+        g.drawString("Всего животных: " + animalCount, 5 , getInsets().top + 20);
+        g.drawString("Родилось: " + bornAnimals, 5 , getInsets().top + 40);
+        g.drawString("Погибло: " + deadAnimals, 5 , getInsets().top + 60);
         screengc.drawImage(buffer, 0, 0, null);
+
     }
 
     @Override

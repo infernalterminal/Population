@@ -13,7 +13,6 @@ public class Food extends EObject
     synchronized void eat()
     {
         alive = false;
-        //System.out.println("food have been ate");
         area.removeObject(getId());
     }
 }

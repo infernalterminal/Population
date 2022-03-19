@@ -4,6 +4,7 @@ import java.util.Random;
 
 public class Area
 {
+    private int bornAnimals, deadAnimals;
     private int posX, posY;
     private int aWidth, aHeight;
     private String aName;
@@ -17,6 +18,8 @@ public class Area
 
     public Area()
     {
+        bornAnimals = 0;
+        deadAnimals = 0;
         posX = 0;
         posY = 0;
         aWidth = 64;
@@ -29,6 +32,8 @@ public class Area
 
     public Area(int x, int y, int width, int height)
     {
+        bornAnimals = 0;
+        deadAnimals = 0;
         posX = x;
         posY = y;
         aWidth = width;
@@ -139,7 +144,6 @@ public class Area
 
     public void removeObject(int id)
     {
-        EObject object;
         EObject[] list;
 
         int [] position = findEObjectById(id);
@@ -151,7 +155,6 @@ public class Area
         {
             if(list[i].getId() == id)
             {
-                //object = list[i];
                 animalList.remove(list[i]);
                 return;
             }
@@ -162,7 +165,6 @@ public class Area
         {
             if(list[i].getId() == id)
             {
-                //object = list[i];
                 foodList.remove(list[i]);
                 return;
             }
@@ -351,4 +353,40 @@ public class Area
                 fedAnimal.add((Animal) eObject);
         }
     }
+
+    public void removeFromFedList(int id)
+    {
+        Animal [] animalList = getFedAnimalList();
+
+        for(Animal animal : animalList)
+        {
+            if(animal.getId() == id)
+                fedAnimal.remove(animal);
+        }
+    }
+
+    public void createAnimal(int x, int y)
+    {
+        if(aList[y][x] == null)
+        {
+            Animal a = new Animal(this, x, y);
+            aList[y][x] = a;
+            animalList.add(a);
+            bornAnimals++;
+        }
+    }
+
+    public void createFood(int x, int y)
+    {
+        if(aList[y][x] == null)
+        {
+            Food f = new Food(this, x, y);
+            aList[y][x] = f;
+            foodList.add(f);
+        }
+    }
+
+    public int getBornAnimals() { return bornAnimals; }
+
+    public int getDeadAnimals() { return deadAnimals; }
 }

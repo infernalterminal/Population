@@ -3,45 +3,85 @@ import java.util.ArrayList;
 
 public class Animal extends EObject implements Runnable {
 
-    private boolean isHungry = true;
-    private boolean isFound = false;
+    private boolean isHungry;
+    private boolean isFound;
     private boolean suspendingFlag;
+
     private float floatX, floatY;
     private float speed;
+
+    private int foodLimit, foodCount;
+
     private String name;
+
+    private AnimalLiveStages stage;
     private Food food;
     private Animal partner;
     private Thread thread;
 
     public Animal(Area a, int x, int y) {
         super(a, x, y);
+
+        isHungry = true;
+        isFound = false;
+        suspendingFlag = false;
+
         floatX = 0;
         floatY = 0;
-        suspendingFlag = false;
+
+        speed = 0.05F;
+
+        foodLimit = 1;
+        foodCount = 0;
+
+        name = "Animal";
+
+        stage = AnimalLiveStages.GROWTH;
         food = null;
         partner = null;
-        name = "Animal";
         thread = new Thread(this, name);
+        thread.setPriority(1);
         thread.start();
-        speed = 0.05F;
     }
 
     public void run()
     {
-        while(isAlive())
+
+        while(foodCount < foodLimit)
         {
             findFood();
-            moveToEObject(food);
 
-            if(confirmTarget(food))
+            if(moveToEObject(food))
             {
-                isHungry = false;
+                foodCount += 1;
                 food.eat();
-                area.fed(id);
             }
             food = null;
             isFound = false;
         }
+        isHungry = false;
+        area.fed(id);
+
+        boolean firstPartner = true;
+        if(findPartner())
+        {
+            firstPartner = false;
+            partner.setPartner(this);
+            setPartner(partner);
+            partner.myResume();
+        }
+
+        else
+        {
+            firstPartner = true;
+            suspendingFlag = true;
+            waiting();
+        }
+
+        moveToEObject(partner);
+        if(firstPartner)
+            makeChild();
+
     }
 
     private void findFood()
@@ -189,6 +229,16 @@ public class Animal extends EObject implements Runnable {
         area = a;
     }
 
+    public void setStage(AnimalLiveStages stg)
+    {
+        stage = stg;
+    }
+
+    public AnimalLiveStages getStage()
+    {
+        return stage;
+    }
+
     private boolean confirmTarget(EObject e)
     {
         if (e != null)
@@ -237,10 +287,10 @@ public class Animal extends EObject implements Runnable {
         }
     }
 
-    private void findPartner()
+    private boolean findPartner()
     {
         Animal target = null;
-        Area[] areas = area.getNeighbors();
+        Area[] areas = area.getAllNeighbors();
         for(Area a : areas)
         {
             boolean isFoundPartner;
@@ -261,22 +311,22 @@ public class Animal extends EObject implements Runnable {
 
                     if(isFoundPartner)
                     {
-                        horDistToAnimal = distTo(area.getX() * 8 + posX, animal.getArea().getX() * 8 + animal.getPosX());
-                        verDistToAnimal = distTo(area.getY() * 8 + posY, animal.getArea().getY() * 8 + animal.getPosY());
+                        horDistToAnimal = distTo(getAbsPosX(), animal.getAbsPosX());
+                        verDistToAnimal = distTo(getAbsPosY(), animal.getAbsPosY());
 
-                        horDistToPartner = distTo(area.getX() * 8 + posX, target.getArea().getX() * 8 + target.getPosX());
-                        verDistToPartner = distTo(area.getY() * 8 + posY, target.getArea().getY() * 8 + target.getPosY());
+                        horDistToPartner = distTo(getAbsPosX(), target.getAbsPosX());
+                        verDistToPartner = distTo(getAbsPosY(), target.getAbsPosY());
 
                         if(horDistToAnimal + verDistToAnimal < horDistToPartner + verDistToPartner)
                         {
-                            if(animal.getId() != id )
+                            if(animal.getId() != id & !animal.haveAPartner())
                                 target = animal;
                         }
                     }
 
                     else
                     {
-                        if(animal.getId() != id )
+                        if(animal.getId() != id & !animal.haveAPartner())
                         {
                             target = animal;
                             isFoundPartner = true;
@@ -287,46 +337,82 @@ public class Animal extends EObject implements Runnable {
             }
         }
         partner = target;
+        if(partner != null)
+            return true;
+        else
+            return false;
+    }
+
+    public boolean haveAPartner()
+    {
+        if(partner != null)
+            return true;
+
+        return false;
+    }
+
+    public void setPartner(Animal animal)
+    {
+        partner = animal;
+        area.removeFromFedList(id);
+    }
+
+    private void waiting()
+    {
+        try
+        {
+            while(suspendingFlag)
+            {
+                synchronized (this)
+                {
+                    wait();
+                }
+            }
+        }
+        catch (InterruptedException exc)
+        {
+            System.out.println("Thread " + name + ": " + exc);
+        }
     }
 
     synchronized void mySuspend()
     {
         suspendingFlag = true;
+        waiting();
     }
 
     synchronized void myResume()
     {
         suspendingFlag = false;
         notify();
+        return;
     }
 
-    private void moveToEObject(EObject eObj)
+    private boolean moveToEObject(EObject eObj)
     {
         if(confirmTarget(eObj))
         {
+            int k = (eObj instanceof Animal) ? 2 : 1;
             int horDistToFood, verDistToFood;
             int horDirection, verDirection;
-            int h, v;
             int gcd;
             BigInteger a, b;
 
-            h = distTo(getAbsPosX(), eObj.getAbsPosX());
-            v = distTo(getAbsPosY(), eObj.getAbsPosY());
+            horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX()) / k;
+            verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY()) / k;
 
-            do
+            horDirection = (getAbsPosX() > eObj.getAbsPosX()) ? -1 : 1;
+            verDirection = (getAbsPosY() > eObj.getAbsPosY()) ? -1 : 1;
+
+            a = new BigInteger(String.valueOf(horDistToFood));
+            b = new BigInteger(String.valueOf(verDistToFood));
+
+            gcd = a.gcd(b).intValue();
+
+
+            for(int i = 0; i < gcd; i++)
             {
-                horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX());
-                verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY());
-
-                horDirection = (getAbsPosX() > eObj.getAbsPosX()) ? -1 : 1;
-                verDirection = (getAbsPosY() > eObj.getAbsPosY()) ? -1 : 1;
-
-                a = new BigInteger(String.valueOf(horDistToFood));
-                b = new BigInteger(String.valueOf(verDistToFood));
-
-                gcd = a.gcd(b).intValue();
-
-                for(int j = 0; j < h / gcd; j++)
+                for(int j = 0; j < horDistToFood / gcd; j++)
                 {
                     horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX());
                     if(horDistToFood > 0 & confirmTarget(eObj))
@@ -335,7 +421,7 @@ public class Animal extends EObject implements Runnable {
                         break;
                 }
 
-                for(int l = 0; l < v / gcd; l++)
+                for(int l = 0; l < verDistToFood / gcd; l++)
                 {
                     verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY());
                     if(verDistToFood > 0 & confirmTarget(eObj))
@@ -343,10 +429,33 @@ public class Animal extends EObject implements Runnable {
                     else
                         break;
                 }
-                horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX());
-                verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY());
             }
-            while( (horDistToFood > 1 | verDistToFood > 1) & confirmTarget(eObj));
+
+            if( horDistToFood <= 1 & verDistToFood <= 1 & confirmTarget(eObj) )
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+
+    public void makeChild()
+    {
+        for(int i = -1; i < 2; i++)
+        {
+            for(int j = -1; j < 2; j++)
+            {
+                if ( (posX + j >= 0) & (posX + j < area.getWidth()) & (posY + i < area.getHeight()) & (posY + i >= 0) )
+                {
+                    if (area.getObject(posX + j, posY + i) == null)
+                    {
+                        area.createAnimal(posX + j, posY + i);
+                        return;
+                    }
+
+                }
+            }
         }
     }
 }
