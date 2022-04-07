@@ -3,8 +3,8 @@ import java.util.ArrayList;
 
 public class Animal extends EObject implements Runnable {
 
-    private boolean isHungry;
     private boolean isFound;
+    private boolean firstPartner;
     private boolean suspendingFlag;
 
     private float floatX, floatY;
@@ -17,13 +17,12 @@ public class Animal extends EObject implements Runnable {
     private AnimalLiveStages stage;
     private Food food;
     private Animal partner;
-    private Thread thread;
 
     public Animal(Area a, int x, int y) {
         super(a, x, y);
 
-        isHungry = true;
         isFound = false;
+        firstPartner = true;
         suspendingFlag = false;
 
         floatX = 0;
@@ -31,56 +30,69 @@ public class Animal extends EObject implements Runnable {
 
         speed = 0.05F;
 
-        foodLimit = 1;
+        foodLimit = 2;
         foodCount = 0;
 
-        name = "Animal";
+        name = "Animal" + getId();
 
         stage = AnimalLiveStages.GROWTH;
         food = null;
         partner = null;
-        thread = new Thread(this, name);
-        thread.setPriority(1);
-        thread.start();
+
+        ThreadPoolManager.addTask(this);
     }
 
     public void run()
     {
-
-        while(foodCount < foodLimit)
+        try
         {
-            findFood();
-
-            if(moveToEObject(food))
+            while(foodCount < foodLimit & !Thread.currentThread().isInterrupted())
             {
-                foodCount += 1;
-                food.eat();
+                findFood();
+
+                if(moveToEObject(food))
+                {
+                    foodCount += 1;
+                    food.eat();
+                }
+                food = null;
+                isFound = false;
+
             }
-            food = null;
-            isFound = false;
-        }
-        isHungry = false;
-        area.fed(id);
+            if(!Thread.currentThread().isInterrupted())
+            {
+                area.addToMatureAnimalList(id);
 
-        boolean firstPartner = true;
-        if(findPartner())
+                if(findPartner()  & !Thread.currentThread().isInterrupted())
+                {
+                    firstPartner = false;
+                    partner.setPartner(this);
+                    setPartner(partner);
+                    partner.myResume();
+                }
+
+                else
+                {
+                    firstPartner = true;
+                    suspendingFlag = true;
+                    waiting();
+                }
+
+                    moveToEObject(partner);
+                    if(firstPartner & !Thread.currentThread().isInterrupted())
+                        makeChild();
+
+            }
+            else
+                return;
+
+        }
+        catch (InterruptedException exc)
         {
-            firstPartner = false;
-            partner.setPartner(this);
-            setPartner(partner);
-            partner.myResume();
+            System.out.println("Thread " + name + " is terminated");
+            return;
         }
 
-        else
-        {
-            firstPartner = true;
-            suspendingFlag = true;
-            waiting();
-        }
-
-        moveToEObject(partner);
-        if(firstPartner)
-            makeChild();
 
     }
 
@@ -248,21 +260,23 @@ public class Animal extends EObject implements Runnable {
     }
 
 
-    private void move(boolean vertical, int direction)
+    private void move(boolean vertical, int direction) throws InterruptedException
     {
         for(int i = 0; i < 1 / speed; i++)
         {
-            if(vertical)
-                floatY += speed * direction;
-            else
-                floatX += speed * direction;
-            try
+
+            if(!Thread.currentThread().isInterrupted())
             {
+                if(vertical)
+                    floatY += speed * direction;
+                else
+                    floatX += speed * direction;
+
                 Thread.sleep(33);
             }
-            catch (InterruptedException exc)
+            else
             {
-                System.out.println(exc);
+                throw new InterruptedException();
             }
         }
 
@@ -285,57 +299,74 @@ public class Animal extends EObject implements Runnable {
             area.moveObject(id);
             floatY = 0.0F;
         }
+
     }
 
-    private boolean findPartner()
+    private boolean findPartner() throws InterruptedException
     {
         Animal target = null;
         Area[] areas = area.getAllNeighbors();
+
         for(Area a : areas)
         {
-            boolean isFoundPartner;
-            int horDistToPartner, verDistToPartner;
-            int horDistToAnimal, verDistToAnimal;
-            Animal animal;
-
-            Animal [] animalList = a.getFedAnimalList();
-
-            isFoundPartner = false;
-
-
-            if(animalList.length > 0)
+            if(!Thread.currentThread().isInterrupted())
             {
-                for(int i = 0; i < animalList.length; i++)
+                boolean isFoundPartner;
+                int horDistToPartner, verDistToPartner;
+                int horDistToAnimal, verDistToAnimal;
+                Animal animal;
+
+                Animal [] animalList = a.getMatureAnimals();
+
+                isFoundPartner = false;
+
+
+                if(animalList.length > 0)
                 {
-                    animal = animalList[i];
-
-                    if(isFoundPartner)
+                    for(int i = 0; i < animalList.length; i++)
                     {
-                        horDistToAnimal = distTo(getAbsPosX(), animal.getAbsPosX());
-                        verDistToAnimal = distTo(getAbsPosY(), animal.getAbsPosY());
 
-                        horDistToPartner = distTo(getAbsPosX(), target.getAbsPosX());
-                        verDistToPartner = distTo(getAbsPosY(), target.getAbsPosY());
-
-                        if(horDistToAnimal + verDistToAnimal < horDistToPartner + verDistToPartner)
+                        if(!Thread.currentThread().isInterrupted())
                         {
-                            if(animal.getId() != id & !animal.haveAPartner())
-                                target = animal;
+                            animal = animalList[i];
+
+                            if(isFoundPartner)
+                            {
+                                horDistToAnimal = distTo(getAbsPosX(), animal.getAbsPosX());
+                                verDistToAnimal = distTo(getAbsPosY(), animal.getAbsPosY());
+
+                                horDistToPartner = distTo(getAbsPosX(), target.getAbsPosX());
+                                verDistToPartner = distTo(getAbsPosY(), target.getAbsPosY());
+
+                                if(horDistToAnimal + verDistToAnimal < horDistToPartner + verDistToPartner)
+                                {
+                                    if(animal.getId() != id & !animal.haveAPartner())
+                                        target = animal;
+                                }
+                            }
+
+                            else
+                            {
+                                if(animal.getId() != id & !animal.haveAPartner())
+                                {
+                                    target = animal;
+                                    isFoundPartner = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new InterruptedException();
                         }
                     }
-
-                    else
-                    {
-                        if(animal.getId() != id & !animal.haveAPartner())
-                        {
-                            target = animal;
-                            isFoundPartner = true;
-                        }
-                    }
-
                 }
             }
+            else
+            {
+                throw new InterruptedException();
+            }
         }
+
         partner = target;
         if(partner != null)
             return true;
@@ -354,28 +385,29 @@ public class Animal extends EObject implements Runnable {
     public void setPartner(Animal animal)
     {
         partner = animal;
-        area.removeFromFedList(id);
+        area.removeFromMatureAnimalList(id);
     }
 
-    private void waiting()
+    private void waiting() throws InterruptedException
     {
-        try
+        while(suspendingFlag)
         {
-            while(suspendingFlag)
+
+            if(!Thread.currentThread().isInterrupted())
             {
                 synchronized (this)
                 {
                     wait();
                 }
             }
-        }
-        catch (InterruptedException exc)
-        {
-            System.out.println("Thread " + name + ": " + exc);
+            else
+            {
+                throw new InterruptedException();
+            }
         }
     }
 
-    synchronized void mySuspend()
+    synchronized void mySuspend() throws InterruptedException
     {
         suspendingFlag = true;
         waiting();
@@ -388,50 +420,63 @@ public class Animal extends EObject implements Runnable {
         return;
     }
 
-    private boolean moveToEObject(EObject eObj)
+    private boolean moveToEObject(EObject eObj) throws InterruptedException
     {
         if(confirmTarget(eObj))
         {
+            int h, v;
             int k = (eObj instanceof Animal) ? 2 : 1;
-            int horDistToFood, verDistToFood;
+            int horDistToTarget, verDistToTarget;
             int horDirection, verDirection;
             int gcd;
             BigInteger a, b;
 
-            horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX()) / k;
-            verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY()) / k;
+            horDistToTarget = (int) Math.ceil(distTo(getAbsPosX(), eObj.getAbsPosX()) / k);
+            verDistToTarget = (int) Math.ceil(distTo(getAbsPosY(), eObj.getAbsPosY()) / k);
+
+            h = horDistToTarget;
+            v = verDistToTarget;
 
             horDirection = (getAbsPosX() > eObj.getAbsPosX()) ? -1 : 1;
             verDirection = (getAbsPosY() > eObj.getAbsPosY()) ? -1 : 1;
 
-            a = new BigInteger(String.valueOf(horDistToFood));
-            b = new BigInteger(String.valueOf(verDistToFood));
+            a = new BigInteger(String.valueOf(horDistToTarget));
+            b = new BigInteger(String.valueOf(verDistToTarget));
 
             gcd = a.gcd(b).intValue();
 
-
             for(int i = 0; i < gcd; i++)
             {
-                for(int j = 0; j < horDistToFood / gcd; j++)
+                for(int j = 0; j < h / gcd; j++)
                 {
-                    horDistToFood = distTo(getAbsPosX(), eObj.getAbsPosX());
-                    if(horDistToFood > 0 & confirmTarget(eObj))
-                        move(false, horDirection);
+                    if(!Thread.currentThread().isInterrupted())
+                    {
+                        if(confirmTarget(eObj))
+                            move(false, horDirection);
+                    }
                     else
-                        break;
+                    {
+                        throw new InterruptedException();
+                    }
                 }
 
-                for(int l = 0; l < verDistToFood / gcd; l++)
+                for(int l = 0; l < v / gcd; l++)
                 {
-                    verDistToFood = distTo(getAbsPosY(), eObj.getAbsPosY());
-                    if(verDistToFood > 0 & confirmTarget(eObj))
-                        move(true, verDirection);
+                    if(!Thread.currentThread().isInterrupted())
+                    {
+                        if(confirmTarget(eObj))
+                            move(true, verDirection);
+                    }
                     else
-                        break;
+                    {
+                        throw new InterruptedException();
+                    }
                 }
             }
 
-            if( horDistToFood <= 1 & verDistToFood <= 1 & confirmTarget(eObj) )
+            horDistToTarget = distTo(getAbsPosX(), eObj.getAbsPosX());
+            verDistToTarget = distTo(getAbsPosY(), eObj.getAbsPosY());
+            if( horDistToTarget <= 1 & verDistToTarget <= 1 & confirmTarget(eObj) )
                 return true;
             else
                 return false;

@@ -38,10 +38,21 @@ public class EFrame extends Frame implements Runnable
     @Override
     public void run()
     {
+        int count = 0;
         try
         {
             while(!suspendingFlag)
             {
+                if(count == 150)
+                {
+                    ThreadPoolManager.stop();
+                }
+                if(count == 300)
+                {
+                    ThreadPoolManager.resume();
+                }
+
+                count++;
                 repaint();
                 Thread.sleep(33);
                 synchronized(this)

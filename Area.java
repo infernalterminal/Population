@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Area
 {
@@ -12,7 +13,7 @@ public class Area
     private EObject [][] aList;
     private ArrayList<Food> foodList;
     private ArrayList<Animal> animalList;
-    private ArrayList<Animal> fedAnimal;
+    private ArrayList<Animal> matureAnimalList;
     private AreaManager aManager = null;
     private Area[] aNeighbors = null;
 
@@ -27,7 +28,7 @@ public class Area
         aList = new EObject[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
-        fedAnimal = new ArrayList<>(2);
+        matureAnimalList = new ArrayList<>(2);
     }
 
     public Area(int x, int y, int width, int height)
@@ -41,7 +42,7 @@ public class Area
         aList = new EObject[8][8];
         foodList = new ArrayList<Food>(10);
         animalList = new ArrayList<Animal>(10);
-        fedAnimal = new ArrayList<>(2);
+        matureAnimalList = new ArrayList<>(2);
     }
 
     synchronized int countFreeSpace()
@@ -63,8 +64,15 @@ public class Area
         {
             int[] space = findFreeSpace();
             Food f = new Food(this, space[0], space[1]);
-            aList[space[1]][space[0]] = f;
-            foodList.add(f);
+
+            synchronized (aList)
+            {
+                aList[space[1]][space[0]] = f;
+            }
+            synchronized (foodList)
+            {
+                foodList.add(f);
+            }
         }
     }
 
@@ -86,8 +94,14 @@ public class Area
         {
             int[] space = findFreeSpace();
             Animal a = new Animal(this, space[0], space[1]);
-            aList[space[1]][space[0]] = a;
-            animalList.add(a);
+            synchronized (aList)
+            {
+                aList[space[1]][space[0]] = a;
+            }
+            synchronized (animalList)
+            {
+                animalList.add(a);
+            }
         }
     }
 
@@ -136,9 +150,15 @@ public class Area
         int [] position = findEObjectById(id);
         if(position[0] != -1)
         {
-            eObject = aList[position[0]][position[1]];
-            aList[position[0]][position[1]] = null;
-            aList[eObject.getPosY()][eObject.getPosX()] = eObject;
+            synchronized (aList)
+            {
+                eObject = aList[position[0]][position[1]];
+                if(aList[eObject.getPosY()][eObject.getPosX()] == null)
+                {
+                    aList[position[0]][position[1]] = null;
+                    aList[eObject.getPosY()][eObject.getPosX()] = eObject;
+                }
+            }
         }
     }
 
@@ -148,14 +168,23 @@ public class Area
 
         int [] position = findEObjectById(id);
         if(position[0] != -1)
-            aList[position[0]][position[1]] = null;
+        {
+            synchronized (aList)
+            {
+                aList[position[0]][position[1]] = null;
+            }
+        }
 
         list = animalList.toArray(new EObject[animalList.size()]);
         for(int i = 0; i < list.length; i++)
         {
             if(list[i].getId() == id)
             {
-                animalList.remove(list[i]);
+                synchronized (animalList)
+                {
+                    animalList.remove(list[i]);
+                }
+
                 return;
             }
         }
@@ -165,7 +194,11 @@ public class Area
         {
             if(list[i].getId() == id)
             {
-                foodList.remove(list[i]);
+                synchronized (foodList)
+                {
+                    foodList.remove(list[i]);
+                }
+
                 return;
             }
         }
@@ -229,7 +262,7 @@ public class Area
         return animalList.toArray(new Animal[animalList.size()]);
     }
 
-    synchronized Animal[] getFedAnimalList() { return fedAnimal.toArray(new Animal[fedAnimal.size()]); }
+    synchronized Animal[] getMatureAnimals() { return matureAnimalList.toArray(new Animal[matureAnimalList.size()]); }
 
     public Area[] getNeighbors() {
         return aNeighbors;
@@ -317,8 +350,16 @@ public class Area
             animal.setPosY(newY);
             animal.setArea(this);
 
-            animalList.add(animal);
-            aList[newY][newX] = animal;
+            synchronized (animalList)
+            {
+                animalList.add(animal);
+            }
+
+            synchronized (aList)
+            {
+                aList[newY][newX] = animal;
+            }
+
         }
     }
 
@@ -341,7 +382,7 @@ public class Area
         return new int[]{-1};
     }
 
-    public void fed(int id)
+    public void addToMatureAnimalList(int id)
     {
         int [] position = findEObjectById(id);
         EObject eObject;
@@ -350,18 +391,28 @@ public class Area
         {
             eObject = aList[position[0]][position[1]];
             if(eObject instanceof Animal)
-                fedAnimal.add((Animal) eObject);
+            {
+                synchronized (matureAnimalList)
+                {
+                    matureAnimalList.add((Animal) eObject);
+                }
+            }
         }
     }
 
-    public void removeFromFedList(int id)
+    public void removeFromMatureAnimalList(int id)
     {
-        Animal [] animalList = getFedAnimalList();
+        Animal [] animalList = getMatureAnimals();
 
         for(Animal animal : animalList)
         {
             if(animal.getId() == id)
-                fedAnimal.remove(animal);
+            {
+                synchronized (matureAnimalList)
+                {
+                    matureAnimalList.remove(animal);
+                }
+            }
         }
     }
 
@@ -370,8 +421,14 @@ public class Area
         if(aList[y][x] == null)
         {
             Animal a = new Animal(this, x, y);
-            aList[y][x] = a;
-            animalList.add(a);
+            synchronized (aList)
+            {
+                aList[y][x] = a;
+            }
+            synchronized (animalList)
+            {
+                animalList.add(a);
+            }
             bornAnimals++;
         }
     }
@@ -381,8 +438,14 @@ public class Area
         if(aList[y][x] == null)
         {
             Food f = new Food(this, x, y);
-            aList[y][x] = f;
-            foodList.add(f);
+            synchronized (aList)
+            {
+                aList[y][x] = f;
+            }
+            synchronized (foodList)
+            {
+                foodList.add(f);
+            }
         }
     }
 
