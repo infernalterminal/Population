@@ -15,10 +15,15 @@ public class ThreadPoolManager
             pool.execute(task);
     }
 
+    static public void removeTask(Runnable task)
+    {
+        tasks.remove(task);
+    }
+
     static public void stop()
     {
         pool.shutdownNow();
-        System.out.println("Потоки остановлены");
+        //System.out.println("Потоки остановлены");
     }
 
     public static void resume()
@@ -30,6 +35,6 @@ public class ThreadPoolManager
         {
             pool.execute(tasks.get(i));
         }
-        System.out.println("Потоки возобновлены");
+        //System.out.println("Потоки возобновлены");
     }
 }

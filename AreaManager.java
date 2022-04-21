@@ -26,9 +26,13 @@ class AreaManager
             for(int j = 0; j < horQuantity; j++)
             {
                 areas[i][j].setAreaManager(this);
+                if((i + 1) * (j + 1) % 2 != 0 )
+                {
+                    areas[i][j].createPopulation();
+                }
             }
         }
-        areas[1][2].createPopulation(4);
+        areas[1][2].createPopulation(2);
 
     }
 

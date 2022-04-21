@@ -1,7 +1,6 @@
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Area
 {
@@ -60,7 +59,7 @@ public class Area
 
     public void createFood()
     {
-        if(countFreeSpace() > 0)
+        if(countFreeSpace() > 0 & foodList.size() <= 8)
         {
             int[] space = findFreeSpace();
             Food f = new Food(this, space[0], space[1]);
@@ -94,6 +93,7 @@ public class Area
         {
             int[] space = findFreeSpace();
             Animal a = new Animal(this, space[0], space[1]);
+            a.setStage(AnimalLiveStages.REPRODUCTION);
             synchronized (aList)
             {
                 aList[space[1]][space[0]] = a;
@@ -355,11 +355,13 @@ public class Area
                 animalList.add(animal);
             }
 
-            synchronized (aList)
+            if(aList[newY][newX] == null)
             {
-                aList[newY][newX] = animal;
+                synchronized (aList)
+                {
+                    aList[newY][newX] = animal;
+                }
             }
-
         }
     }
 
@@ -435,7 +437,7 @@ public class Area
 
     public void createFood(int x, int y)
     {
-        if(aList[y][x] == null)
+        if(aList[y][x] == null & foodList.size() <= 8)
         {
             Food f = new Food(this, x, y);
             synchronized (aList)
@@ -449,7 +451,22 @@ public class Area
         }
     }
 
+    public void increaseDeadAnimals()
+    {
+        deadAnimals += 1;
+    }
+
     public int getBornAnimals() { return bornAnimals; }
 
     public int getDeadAnimals() { return deadAnimals; }
+
+    public void update()
+    {
+        matureAnimalList = new ArrayList<>();
+
+        if(foodList.size() < 1)
+        {
+            createFood(2);
+        }
+    }
 }

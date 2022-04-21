@@ -1,9 +1,11 @@
+import java.awt.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Animal extends EObject implements Runnable {
 
     private boolean isFound;
+    private boolean isParent;
     private boolean firstPartner;
     private boolean suspendingFlag;
 
@@ -11,9 +13,11 @@ public class Animal extends EObject implements Runnable {
     private float speed;
 
     private int foodLimit, foodCount;
+    private int circles;
 
     private String name;
 
+    private Color color;
     private AnimalLiveStages stage;
     private Food food;
     private Animal partner;
@@ -22,16 +26,19 @@ public class Animal extends EObject implements Runnable {
         super(a, x, y);
 
         isFound = false;
+        isParent = false;
         firstPartner = true;
         suspendingFlag = false;
 
         floatX = 0;
         floatY = 0;
 
-        speed = 0.05F;
+        speed = 0.04F;
+        circles = 0;
+        color = new Color(216,91,85);
 
-        foodLimit = 2;
-        foodCount = 0;
+        foodLimit = 1;
+        foodCount = 1;
 
         name = "Animal" + getId();
 
@@ -59,28 +66,31 @@ public class Animal extends EObject implements Runnable {
                 isFound = false;
 
             }
-            if(!Thread.currentThread().isInterrupted())
+            if(stage == AnimalLiveStages.REPRODUCTION & !isParent)
             {
                 area.addToMatureAnimalList(id);
 
-                if(findPartner()  & !Thread.currentThread().isInterrupted())
+                if(partner == null)
                 {
-                    firstPartner = false;
-                    partner.setPartner(this);
-                    setPartner(partner);
-                    partner.myResume();
+                    if(findPartner())
+                    {
+                        firstPartner = false;
+                        partner.setPartner(this);
+                        setPartner(partner);
+                        partner.myResume();
+                    }
+
+                    else
+                    {
+                        firstPartner = true;
+                        suspendingFlag = true;
+                        waiting();
+                    }
                 }
 
-                else
-                {
-                    firstPartner = true;
-                    suspendingFlag = true;
-                    waiting();
-                }
-
-                    moveToEObject(partner);
-                    if(firstPartner & !Thread.currentThread().isInterrupted())
-                        makeChild();
+                moveToEObject(partner);
+                if(!isParent & firstPartner & !Thread.currentThread().isInterrupted())
+                    makeChild();
 
             }
             else
@@ -89,7 +99,7 @@ public class Animal extends EObject implements Runnable {
         }
         catch (InterruptedException exc)
         {
-            System.out.println("Thread " + name + " is terminated");
+            //System.out.println("Thread " + name + " is terminated");
             return;
         }
 
@@ -204,14 +214,6 @@ public class Animal extends EObject implements Runnable {
         return area;
     }
 
-    public int getPosX() {
-        return posX;
-    }
-
-    public int getPosY() {
-        return posY;
-    }
-
     public float getFloatX() {
         return floatX;
     }
@@ -244,12 +246,35 @@ public class Animal extends EObject implements Runnable {
     public void setStage(AnimalLiveStages stg)
     {
         stage = stg;
+        circles = 0;
+        foodCount = 0;
+        switch (stage)
+        {
+            case GROWTH:
+                speed = 0.04F;
+                color = new Color(216,91,85);
+                foodLimit = 1;
+                break;
+            case REPRODUCTION:
+                color = Color.red;
+                speed = 0.05F;
+                foodLimit = 2;
+                break;
+            case DYING:
+                color = new Color(153,0,51);
+                speed = 0.04F;
+                break;
+        }
     }
 
     public AnimalLiveStages getStage()
     {
         return stage;
     }
+
+    public Color getColor() { return color; }
+
+    public void hasChild() { isParent = true; }
 
     private boolean confirmTarget(EObject e)
     {
@@ -273,6 +298,8 @@ public class Animal extends EObject implements Runnable {
                     floatX += speed * direction;
 
                 Thread.sleep(33);
+                if(floatY >= 1.0 | floatY <= -1 | floatX <= -1 | floatX >= 1)
+                    break;
             }
             else
             {
@@ -320,12 +347,10 @@ public class Animal extends EObject implements Runnable {
 
                 isFoundPartner = false;
 
-
                 if(animalList.length > 0)
                 {
                     for(int i = 0; i < animalList.length; i++)
                     {
-
                         if(!Thread.currentThread().isInterrupted())
                         {
                             animal = animalList[i];
@@ -417,7 +442,6 @@ public class Animal extends EObject implements Runnable {
     {
         suspendingFlag = false;
         notify();
-        return;
     }
 
     private boolean moveToEObject(EObject eObj) throws InterruptedException
@@ -487,20 +511,87 @@ public class Animal extends EObject implements Runnable {
 
     public void makeChild()
     {
+
+        for(int i = -1; i < 2; i++)
+        {
+            if ((posY + i < area.getHeight()) & (posY + i >= 0) )
+            {
+                if (area.getObject(posX, posY + i) == null) {
+                    area.createAnimal(posX, posY + i);
+                    partner.hasChild();
+                    hasChild();
+                    return;
+                }
+            }
+        }
+        for(int j = -1; j < 2; j++)
+        {
+            if( (posX + j >= 0) & (posX + j < area.getWidth()))
+            {
+                if (area.getObject(posX + j, posY) == null) {
+                    area.createAnimal(posX + j, posY);
+                    partner.hasChild();
+                    hasChild();
+                    return;
+                }
+            }
+        }
+
         for(int i = -1; i < 2; i++)
         {
             for(int j = -1; j < 2; j++)
             {
                 if ( (posX + j >= 0) & (posX + j < area.getWidth()) & (posY + i < area.getHeight()) & (posY + i >= 0) )
                 {
-                    if (area.getObject(posX + j, posY + i) == null)
-                    {
+                    if (area.getObject(posX + j, posY + i) == null) {
                         area.createAnimal(posX + j, posY + i);
+                        partner.hasChild();
+                        hasChild();
                         return;
                     }
-
                 }
             }
         }
+    }
+
+    public void update()
+    {
+        if(foodCount < foodLimit)
+        {
+            area.removeObject(id);
+            area.increaseDeadAnimals();
+            ThreadPoolManager.removeTask(this);
+        }
+        else
+        {
+            if(circles >= stage.getCircles())
+            {
+                switch (stage)
+                {
+                    case GROWTH:
+                        stage = AnimalLiveStages.REPRODUCTION;
+                        circles = 0;
+                        color = Color.red;
+                        speed = 0.05F;
+                        foodLimit = 2;
+                        break;
+                    case REPRODUCTION:
+                        stage = AnimalLiveStages.DYING;
+                        circles = 0;
+                        color = new Color(153,0,51);
+                        speed = 0.04F;
+                        break;
+                    case DYING:
+                        circles += 1;
+                        speed -= 0.005F;
+                        break;
+                }
+            }
+            else
+                circles += 1;
+        }
+        foodCount = 0;
+        food = null;
+        partner = null;
     }
 }
